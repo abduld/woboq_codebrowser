@@ -138,7 +138,7 @@ public:
     virtual void Initialize(clang::ASTContext& Ctx) override {
         annotator.setSourceMgr(Ctx.getSourceManager(), Ctx.getLangOpts());
         annotator.setMangleContext(Ctx.createMangleContext());
-        ci.getPreprocessor().addPPCallbacks(maybe_unique(new PreprocessorCallback(annotator, ci.getPreprocessor())));
+        ci.getPreprocessor().addPPCallbacks(std::unique_ptr<PreprocessorCallback>(new PreprocessorCallback(annotator, ci.getPreprocessor())));
         ci.getDiagnostics().setClient(new BrowserDiagnosticClient(annotator), true);
     }
 
@@ -177,12 +177,7 @@ class BrowserAction : public clang::ASTFrontendAction {
     static std::set<std::string> processed;
     bool WasInDatabase;
 protected:
-#if CLANG_VERSION_MAJOR == 3 && CLANG_VERSION_MINOR <= 5
-    virtual clang::ASTConsumer *
-#else
-    virtual std::unique_ptr<clang::ASTConsumer>
-#endif
-    CreateASTConsumer(clang::CompilerInstance &CI,
+    virtual std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance &CI,
                                            llvm::StringRef InFile) override {
         if (processed.count(InFile.str())) {
             std::cerr << "Skipping already processed " << InFile.str()<< std::endl;
@@ -192,7 +187,7 @@ protected:
 
         CI.getFrontendOpts().SkipFunctionBodies = true;
 
-        return maybe_unique(new BrowserASTConsumer(CI, *projectManager, WasInDatabase));
+        return std::unique_ptr<clang::ASTConsumer>(new BrowserASTConsumer(CI, *projectManager, WasInDatabase));
     }
 
 public:
@@ -301,8 +296,8 @@ int main(int argc, const char **argv) {
 
     if (!Compilations) {
         std::string ErrorMessage;
-        Compilations = std::unique_ptr<clang::tooling::CompilationDatabase>(
-            clang::tooling::CompilationDatabase::loadFromDirectory(BuildPath, ErrorMessage));
+        Compilations.reset(clang::tooling::CompilationDatabase::loadFromDirectory(BuildPath,
+                                                            ErrorMessage).get());
         if (!ErrorMessage.empty()) {
             std::cerr << ErrorMessage << std::endl;
         }
