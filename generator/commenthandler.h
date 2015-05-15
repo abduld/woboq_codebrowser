@@ -34,29 +34,27 @@ class Sema;
 class Generator;
 
 class CommentHandler {
-  struct CommentVisitor;
-
+    struct CommentVisitor;
 public:
-  struct Doc {
-    std::string content;
-    clang::SourceLocation loc;
-  };
 
-  std::multimap<std::string, Doc> docs;
+    struct Doc {
+        std::string content;
+        clang::SourceLocation loc;
+    };
 
-  // fileId -> [ref, global_visibility]
-  std::multimap<clang::SourceLocation, std::pair<std::string, bool>>
-      decl_offsets;
+    std::multimap<std::string, Doc> docs;
 
-  /**
-   * Handle the comment startig at @a commentstart within @a bufferStart with
-   * length @a len.
-   * Search for corresponding declaration in the given source location interval
-   * @a commentLoc is the position of the comment
-   */
-  void handleComment(Annotator &A, Generator &generator, clang::Sema &Sema,
-                     const char *bufferStart, int commentStart, int len,
-                     clang::SourceLocation searchLocBegin,
-                     clang::SourceLocation searchLocEnd,
-                     clang::SourceLocation commentLoc);
+    // fileId -> [ref, global_visibility]
+    std::multimap<clang::SourceLocation, std::pair<std::string, bool>> decl_offsets;
+
+    /**
+     * Handle the comment startig at @a commentstart within @a bufferStart with length @a len.
+     * Search for corresponding declaration in the given source location interval
+     * @a commentLoc is the position of the comment
+     */
+    void handleComment(Annotator &A, Generator& generator, clang::Sema& Sema,
+                       const char* bufferStart, int commentStart, int len,
+                       clang::SourceLocation searchLocBegin, clang::SourceLocation searchLocEnd,
+                       clang::SourceLocation commentLoc);
+
 };
